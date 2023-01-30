@@ -82,11 +82,11 @@ type Logger struct {
 	// os.TempDir() if empty.
 	Filename string `json:"filename" yaml:"filename"`
 
-	// MaxSize is the maximum size in megabytes of the log file before it gets
-	// rotated. It defaults to 100 megabytes.
+	// MaxSize is the maximum size in bytes of the log file before it gets
+	// rotated. It defaults to 100 bytes.
 	MaxSize int `json:"maxsize" yaml:"maxsize"`
 
-	// MaxAge is the maximum number of minutes to retain old log files based on the
+	// MaxAge is the maximum number of seconds to retain old log files based on the
 	// timestamp encoded in their filename.  Note that a day is defined as 24
 	// hours and may not exactly correspond to calendar days due to daylight
 	// savings, leap seconds, etc. The default is not to remove old log files
@@ -126,6 +126,8 @@ var (
 	// variable so tests can mock it out and not need to write megabytes of data
 	// to disk.
 	megabyte = 1024 * 1024
+
+	bt = 1
 )
 
 // Write implements io.Writer.  If a write would cause the log file to be larger
@@ -334,7 +336,7 @@ func (l *Logger) millRunOnce() error {
 		files = remaining
 	}
 	if l.MaxAge > 0 {
-		diff := time.Duration(int64(time.Minute) * int64(l.MaxAge))
+		diff := time.Duration(int64(time.Second) * int64(l.MaxAge))
 		cutoff := currentTime().Add(-1 * diff)
 
 		var remaining []logInfo
@@ -444,9 +446,9 @@ func (l *Logger) timeFromName(filename, prefix, ext string) (time.Time, error) {
 // max returns the maximum size in bytes of log files before rolling.
 func (l *Logger) max() int64 {
 	if l.MaxSize == 0 {
-		return int64(defaultMaxSize * megabyte)
+		return int64(defaultMaxSize)
 	}
-	return int64(l.MaxSize) * int64(megabyte)
+	return int64(l.MaxSize)
 }
 
 // dir returns the directory for the current filename.
